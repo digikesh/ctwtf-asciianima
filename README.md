@@ -2,7 +2,7 @@
 
 # ascii anima
 
-**Interactive ASCII pictures that weigh a few kilobytes.**
+**Interactive ASCII media that weigh a few kilobytes.**
 
 <img src="media/hover.gif" width="440" alt="A beetle drawn in coloured text characters. A cursor glides over it and the characters swell into a magnifying lens, then two clicks throw them outward and they drift back.">
 
