@@ -24,7 +24,7 @@ The photo on the left is a 40 KB JPEG. The `.asciimap` in the middle is the same
 
 <br>
 
-## Hover, click, and the photo's own colours
+## Customize the look
 
 <img src="media/click.gif" width="560" alt="A tiger close-up drawn in its own colours with text characters. Clicks in three places throw the characters outward in rings that drift back into place.">
 
@@ -32,7 +32,7 @@ A map can keep the source's colours, stored as one small JPEG at grid size insid
 
 <br>
 
-## A placeholder that becomes the photo
+## A 'lazy load' variant
 
 <table>
 <tr>
