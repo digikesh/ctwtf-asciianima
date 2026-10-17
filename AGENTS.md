@@ -59,6 +59,28 @@ The returned object has `frame(now)`, `resolve(source)`, `replay()`, `isWaiting(
 
 `load(url)` fetches and validates a map. `parse(json)` and `validate(map)` do the same for a map you already have, and throw readable errors on a bad file. `resolveConfig(baked, overrides)` shows the settings a player would use. `bake(pixels, cols, rows, options)` turns RGBA pixels into a map's characters without a DOM, so a build step in Node can make maps. `VERSION` and `MAP_VERSION` report what you have.
 
+## Fitting it into a project
+
+The file is UMD on purpose: it has to run from a plain `<script>` tag, from `file://`, and through `require()` in Node, and ES modules can't do all three. Adapt it to the project you're working in rather than editing the library.
+
+**Plain HTML.** Copy `ascii-player.js` into the site and load it with `<script src="ascii-player.js"></script>` before any script that uses it. It defines `window.AsciiPlayer`.
+
+**ES modules or a bundler (Vite, webpack, Next, SvelteKit).** Import it for its side effect, then read the global. A small wrapper keeps the rest of the code clean:
+
+```js
+// ascii-player.mjs
+import './ascii-player.js';
+const AsciiPlayer = globalThis.AsciiPlayer;
+export default AsciiPlayer;
+export const { mount, reveal, load, parse, validate, bake } = AsciiPlayer;
+```
+
+Bundlers that understand CommonJS can also use `import AsciiPlayer from './ascii-player.js'` directly. In server-rendered frameworks, only call `mount` and `reveal` in the browser (inside `onMount`, `useEffect` or similar), since they need a DOM and a canvas. Loading it with a dynamic `import()` from that hook keeps it out of the server bundle.
+
+**Node.** `const AsciiPlayer = require('./ascii-player.js')` gives you `bake`, `parse` and `validate` for build steps. `mount` and `reveal` need a browser.
+
+**TypeScript.** There are no bundled types. Declare the module as `any`, or write a small `.d.ts` from the API tables above.
+
 ## The .asciimap format
 
 A map is JSON, currently version 3. Older versions still load.

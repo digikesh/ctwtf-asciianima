@@ -1,6 +1,6 @@
 /* ════════════════════════════════════════════════════════════
    ascii-player — the runtime half of ascii-anima.
-   built by kesh with our good friend claude
+   built by kesh · creativetech.wtf · MIT
    bake your own maps at https://asciianima.creativetech.wtf
 
    Loads a baked .asciimap file and renders it as an interactive
@@ -9,9 +9,9 @@
    click bursts driven by a hand-drawn motion curve. Dependency-free
    canvas 2D, one file, works from a plain <script> tag.
 
-   This is the file that travels to other sites — like the
-   portra-anima player, everything expensive happened in the mapper
-   at bake time; the player only reads numbers. (Coming soon)
+   This is the file that travels to other sites — everything
+   expensive happened in the mapper at bake time; the player only
+   reads numbers.
 
      <script src="ascii-player.js"></script>
      <div id="host"></div>
@@ -168,7 +168,9 @@ const reducedMotion = () => typeof matchMedia === 'function' && matchMedia('(pre
 /** a <video> set up to decode quietly: muted, inline, preloaded */
 function quietVideo() {
 	const v = document.createElement('video');
-	v.muted = true; v.playsInline = true; v.preload = 'auto';
+	v.muted = true;
+	v.playsInline = true;
+	v.preload = 'auto';
 	return v;
 }
 /** anything with play() and a videoWidth is treated as a <video> */
@@ -177,7 +179,13 @@ const isVideo = (v) => !!v && typeof v.play === 'function' && 'videoWidth' in v;
 function seekTo(video, t) {
 	return new Promise((resolve) => {
 		let done = false;
-		const finish = () => { if (!done) { done = true; video.removeEventListener('seeked', finish); resolve(); } };
+		const finish = () => {
+			if (!done) {
+				done = true;
+				video.removeEventListener('seeked', finish);
+				resolve();
+			}
+		};
 		video.addEventListener('seeked', finish);
 		setTimeout(finish, 500);
 		video.currentTime = t;
@@ -229,7 +237,8 @@ function sampleCurvePts(pts, n) {
 		const v = span <= 0 ? b.v : hermite(a.v, b.v, tan[seg], tan[seg + 1], span, clamp01((t - a.t) / span));
 		out.push(clamp01(v));
 	}
-	out[0] = 0; out[n - 1] = 0;
+	out[0] = 0;
+	out[n - 1] = 0;
 	return out;
 }
 
@@ -277,7 +286,7 @@ const DEFAULT_CONFIG = Object.freeze({
 
 /* user stops (the mapper's tone bar): stops[i] is where glyph i starts,
    0..1 ascending, one per ramp glyph, stops[0] = 0. Without them the
-   ramp is spread evenly, exactly as before stops existed. */
+   ramp is spread evenly. */
 const validStops = (stops, ramp) =>
 	Array.isArray(stops) && stops.length === ramp.length &&
 	stops.every((x, i) => typeof x === 'number' && x >= 0 && x <= 1 && (i === 0 || x >= stops[i - 1]));
@@ -478,7 +487,9 @@ function bake(pixels, cols, rows, options) {
 			if (keep) {
 				const i = k * ch;
 				lum[k] = Math.round(v * 255);
-				color[k * 3] = pixels[i]; color[k * 3 + 1] = pixels[i + 1]; color[k * 3 + 2] = pixels[i + 2];
+				color[k * 3] = pixels[i];
+				color[k * 3 + 1] = pixels[i + 1];
+				color[k * 3 + 2] = pixels[i + 2];
 			}
 			line += ramp[glyphOf(v)];
 		}
@@ -494,14 +505,13 @@ function bake(pixels, cols, rows, options) {
    colour data, and it reads the same in the player and the reveal. Theme
    (background, font) stays the page's; this is the map's authored look,
    like an image's own colours. */
-/* GRADIENTS BLEND IN OKLCH (2026-10-13, Kesh: "try this method: in CSS,
-   linear-gradient(in oklch, red, blue). Browsers now blend in OKLCH
-   natively"). The glyph colours are computed here, not by CSS, and canvas
+/* GRADIENTS BLEND IN OKLCH, as CSS linear-gradient(in oklch, ...) does.
+   The glyph colours are computed here, not by CSS, and canvas
    gradients cannot take an interpolation space, so this does the same maths
    CSS Color 4 does for `in oklch`: sRGB to OKLab (Björn Ottosson's matrices)
    to LCH, lightness and chroma blended straight, hue the shorter way round,
    and an achromatic end (black, white, greys: no meaningful hue) takes the
-   other end's hue, as CSS treats a powerless hue. Red to blue now passes
+   other end's hue, as CSS treats a powerless hue. Red to blue passes
    through a vivid purple instead of a muddy one, and stays even in
    lightness. Checked against Chrome's own color-mix(in oklch, ...). */
 const toLin = (c) => (c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4));
@@ -574,9 +584,9 @@ function toneColors(map, which) {
    A scramble redraws hundreds of cells a frame in one size and a
    handful of colours, so its glyphs come from a strip rasterized
    once (one sprite per ramp glyph) and are blitted with drawImage.
-   The player does NOT do this: measured 2026-10-13, a per-instance
-   sprite atlas for the lens and bursts was no faster than grouped
-   fillText in Chrome (whose text path has its own glyph cache) and
+   The player does NOT do this: a per-instance sprite atlas for the lens
+   and bursts measured no faster than grouped fillText in Chrome (whose
+   text path has its own glyph cache) and costs up to 12 MB a player.
    cost up to 12 MB a player, so it was taken out again.
    ════════════════════════════════════════════════════════════ */
 
@@ -637,7 +647,13 @@ function coverCrop(photo, W, H) {
 	const ih = photo.naturalHeight || photo.videoHeight || photo.height;
 	const ta = W / H;
 	let sw = iw, sh = ih, sx = 0, sy = 0;
-	if (iw / ih > ta) { sw = sh * ta; sx = (iw - sw) / 2; } else { sh = sw / ta; sy = (ih - sh) / 2; }
+	if (iw / ih > ta) {
+		sw = sh * ta;
+		sx = (iw - sw) / 2;
+	} else {
+		sh = sw / ta;
+		sy = (ih - sh) / 2;
+	}
 	return [sx, sy, sw, sh];
 }
 
@@ -724,7 +740,10 @@ function reveal(target, map, options) {
 		if (!fontReady && fonts && !fonts.check(face)) {
 			if (!fontAsked) {
 				fontAsked = true;
-				fonts.load(face).catch(() => {}).then(() => { fontReady = true; wake(); });
+				fonts.load(face).catch(() => {}).then(() => {
+					fontReady = true;
+					wake();
+				});
 			}
 			return false;
 		}
@@ -773,11 +792,10 @@ function reveal(target, map, options) {
 		return true;
 	}
 
-	/* A CLIP keeps going (2026-10-13, Kesh: "the clip should autoplay"):
-	   hand resolve() a <video> sitting on its first frame and, once the
-	   pixel steps land on that frame, the reveal plays it on, muted and
-	   looping, drawing each new frame to the same canvas. Not under
-	   reduced motion (the first frame simply stays), not with
+	/* A clip keeps playing: hand resolve() a <video> sitting on its first
+	   frame and, once the pixel steps land on that frame, the reveal plays
+	   it on, muted and looping, drawing each new frame to the same canvas.
+	   Not under reduced motion (the first frame simply stays), not with
 	   options.autoplay false. */
 	let vloop = 0, started = false;
 	function playVideo() {
@@ -854,7 +872,10 @@ function reveal(target, map, options) {
 		if (!prepFont()) return false;
 		if (t0 === null) t0 = now;
 		const el = now - t0;
-		if (!scrambled) { drawScramble(now, el); return false; }
+		if (!scrambled) {
+			drawScramble(now, el);
+			return false;
+		}
 		// the map holds for as long as the photo takes (that is the point),
 		// and at least revealHold so a cached photo still shows the map
 		if (!photo) return false;
@@ -891,7 +912,10 @@ function reveal(target, map, options) {
 		img.decoding = 'async';
 		img.crossOrigin = opts.crossOrigin || null;
 		img.src = opts.src;
-		(img.decode ? img.decode() : new Promise((ok, no) => { img.onload = ok; img.onerror = no; }))
+		(img.decode ? img.decode() : new Promise((ok, no) => {
+			img.onload = ok;
+			img.onerror = no;
+		}))
 			.then(() => resolve(img))
 			.catch(() => { /* no photo: the map stays, which is still a picture */ });
 	}
@@ -908,7 +932,13 @@ function reveal(target, map, options) {
 			if (dead) return;
 			stopVideo();
 			if (isVideo(photo)) photo.currentTime = 0;
-			W = 0; t0 = null; scrambled = false; end = 0; step = -1; done = false; sheet = null;
+			W = 0;
+			t0 = null;
+			scrambled = false;
+			end = 0;
+			step = -1;
+			done = false;
+			sheet = null;
 			photoAt = null;
 			seed();
 			wake();
@@ -977,7 +1007,7 @@ function prepCells(map, raw, hydrated, cfg, theme) {
 	const col = raw.color ? Uint8Array.from(raw.color) : (hydrated || null);
 	// a map with tones paints each glyph its own colour, full strength;
 	// without, the theme's ink, fainter where the picture is darker
-	// restColor 'image' (2026-10-13): the picture's own colours at rest,
+	// restColor 'image': the picture's own colours at rest,
 	// once they are in (an atlas decodes a beat after mount); it wins
 	// over a rest gradient, which the mapper does not write alongside it
 	const rest = cfg.restColor === 'image' && col ? col : null;
@@ -1005,13 +1035,16 @@ function createHydrator(onColors) {
 
 	/** the drawable's (sx, sy) tile, or all of it, down-sampled to cols × rows, as r,g,b per cell */
 	function sampleColors(drawable, cols, rows, sx, sy) {
-		canvas.width = cols; canvas.height = rows;
+		canvas.width = cols;
+		canvas.height = rows;
 		if (sx === undefined) ctx.drawImage(drawable, 0, 0, cols, rows);
 		else ctx.drawImage(drawable, sx, sy, cols, rows, 0, 0, cols, rows);
 		const px = ctx.getImageData(0, 0, cols, rows).data;
 		const col = new Uint8Array(cols * rows * 3);
 		for (let k = 0; k < cols * rows; k++) {
-			col[k * 3] = px[k * 4]; col[k * 3 + 1] = px[k * 4 + 1]; col[k * 3 + 2] = px[k * 4 + 2];
+			col[k * 3] = px[k * 4];
+			col[k * 3 + 1] = px[k * 4 + 1];
+			col[k * 3 + 2] = px[k * 4 + 2];
 		}
 		return col;
 	}
@@ -1099,7 +1132,12 @@ const LONG_PRESS_SLOP = 12;
 function attachPointer(canvas, actions) {
 	let lastPointerType = 'mouse';
 	let lpTimer = 0, lpX = 0, lpY = 0;
-	const clearLongPress = () => { if (lpTimer) { clearTimeout(lpTimer); lpTimer = 0; } };
+	const clearLongPress = () => {
+		if (lpTimer) {
+			clearTimeout(lpTimer);
+			lpTimer = 0;
+		}
+	};
 
 	function onMove(e) {
 		if (e.pointerType === 'touch') {
@@ -1111,14 +1149,21 @@ function attachPointer(canvas, actions) {
 	function onDown(e) {
 		lastPointerType = e.pointerType || 'mouse';
 		if (e.pointerType === 'touch') {
-			lpX = e.offsetX; lpY = e.offsetY;
+			lpX = e.offsetX;
+			lpY = e.offsetY;
 			clearLongPress();
-			lpTimer = setTimeout(() => { lpTimer = 0; actions.burst(lpX, lpY); }, LONG_PRESS_MS);
+			lpTimer = setTimeout(() => {
+				lpTimer = 0;
+				actions.burst(lpX, lpY);
+			}, LONG_PRESS_MS);
 			return;
 		}
 		onMove(e);
 	}
-	const onLeave = () => { clearLongPress(); actions.lookAway(); };
+	const onLeave = () => {
+		clearLongPress();
+		actions.lookAway();
+	};
 	const onClick = (e) => { if (lastPointerType !== 'touch') actions.burst(e.offsetX, e.offsetY); };
 
 	const pairs = [['pointermove', onMove], ['pointerdown', onDown], ['pointerup', clearLongPress],
@@ -1174,7 +1219,10 @@ function mount(host, map, options) {
 		if (cfg.restColor === 'image') {
 			// the colours are what the glyphs rest in: re-prep, and repaint now
 			prepped[i] = null;
-			if (i === frameIdx && grid) { renderStatic(cellsFor(frameIdx)); blitStatic(); }
+			if (i === frameIdx && grid) {
+				renderStatic(cellsFor(frameIdx));
+				blitStatic();
+			}
 		} else if (prepped[i]) prepped[i].col = col;
 		schedule();
 	});
@@ -1183,7 +1231,9 @@ function mount(host, map, options) {
 	function normalize() {
 		rawFrames = framesOf(map);
 		resetPrepped();
-		frameIdx = 0; clock = 0; lastTs = 0;
+		frameIdx = 0;
+		clock = 0;
+		lastTs = 0;
 		playing = animated() && autoplay && !REDUCED;
 		ensureHashes();
 		hydCols.length = 0;
@@ -1230,7 +1280,10 @@ function mount(host, map, options) {
 				for (let rr = r0; rr <= r1; rr++) {
 					for (let cc = c0; cc <= c1; cc++) {
 						const kk = rr * cols + cc;
-						if (!out[kk]) { out[kk] = 1; n++; }
+						if (!out[kk]) {
+							out[kk] = 1;
+							n++;
+						}
 					}
 				}
 			}
@@ -1248,7 +1301,10 @@ function mount(host, map, options) {
 		const changed = new Uint8Array(cols * rows);
 		let any = false;
 		for (let k = 0; k < cols * rows; k++) {
-			if (prev.chars[k] !== cells.chars[k] || prev.fills[k] !== cells.fills[k]) { changed[k] = 1; any = true; }
+			if (prev.chars[k] !== cells.chars[k] || prev.fills[k] !== cells.fills[k]) {
+				changed[k] = 1;
+				any = true;
+			}
 		}
 		if (!any) return null;
 		const clip = growMark(changed, cols, rows);
@@ -1258,11 +1314,10 @@ function mount(host, map, options) {
 
 	/** draw `cells` onto the static layer: whole when nothing is there (or the
 	    grid changed, or most cells changed), else by diff against the frame on
-	    it. THE DIFF IS EXACT (Kesh 2026-10-14, "small strips of lines that have
-	    the gradient", "random shit in the bg"): the changed cells and the ring
-	    where their glyphs spill, snapped to whole device pixels (a cell is a
-	    fraction of a pixel wide; a clear at fractional edges half-covers the
-	    boundary pixel and left a sliver of the old glyph along every seam),
+	    it. THE DIFF IS EXACT: the changed cells and the ring where their
+	    glyphs spill, snapped to whole device pixels (a cell is a fraction of
+	    a pixel wide; a clear at fractional edges half-covers the boundary
+	    pixel and leaves a sliver of the old glyph along every seam),
 	    become a clip region; inside it the background is laid down and every
 	    glyph that reaches into it (that ring's own neighbours too) is drawn
 	    again, so each pixel in the clip is built exactly as a whole render
@@ -1275,7 +1330,10 @@ function mount(host, map, options) {
 		const prev = staticCells && staticCells.cols === cells.cols && staticCells.rows === cells.rows ? staticCells : null;
 		if (prev) {
 			d = diffCells(cells, prev);
-			if (!d) { staticCells = cells; return; }
+			if (!d) {
+				staticCells = cells;
+				return;
+			}
 			if (d.marked >= cells.cols * cells.rows * 0.5) d = null;
 		}
 		sctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -1369,13 +1427,17 @@ function mount(host, map, options) {
 		const lensPad = R + g.ch * cfg.magnify + cfg.repel * g.ch;
 		let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
 		if (lensOn) {
-			x0 = pointer.x - lensPad; x1 = pointer.x + lensPad;
-			y0 = pointer.y - lensPad; y1 = pointer.y + lensPad;
+			x0 = pointer.x - lensPad;
+			x1 = pointer.x + lensPad;
+			y0 = pointer.y - lensPad;
+			y1 = pointer.y + lensPad;
 		}
 		const p = cfg.blast * g.wCss + cfg.power * g.wCss + g.ch * 2;
 		for (const a of actives) {
-			x0 = Math.min(x0, a.x - p); x1 = Math.max(x1, a.x + p);
-			y0 = Math.min(y0, a.y - p); y1 = Math.max(y1, a.y + p);
+			x0 = Math.min(x0, a.x - p);
+			x1 = Math.max(x1, a.x + p);
+			y0 = Math.min(y0, a.y - p);
+			y1 = Math.max(y1, a.y + p);
 		}
 		return {
 			c0: Math.max(0, Math.floor(x0 / g.cw)), c1: Math.min(g.cols - 1, Math.ceil(x1 / g.cw)),
@@ -1407,22 +1469,20 @@ function mount(host, map, options) {
 		return theme.ink;
 	}
 
-	/* ONLY THE CELLS THE LENS OR A BURST TOUCHES ARE REDRAWN (2026-10-13).
-	   The static layer is already right everywhere else (the box used to be
-	   wiped and every cell in it redrawn, corners and padding ring included,
+	/* ONLY THE CELLS THE LENS OR A BURST TOUCHES ARE REDRAWN.
+	   The static layer is already right everywhere else (wiping the box and
+	   redrawing every cell in it, corners and padding ring included, costs
 	   ~2,500 fillText a frame for a maxed lens). An affected cell clears its
 	   own home and is queued; untouched ones are left alone. */
-	/* MAGNIFIED GLYPHS ARE DRAWN GROUPED BY SIZE (2026-10-13, Kesh: "why
-	   does it lag so much when magnify is all the way maxed out?"). Each
-	   magnified glyph has one of a handful of eighth-step sizes; drawn in
-	   grid order, ctx.font switched for nearly every one, and every switch
-	   makes the browser parse a font string (~610 changes a frame on a maxed
-	   lens, ~10fps at 4x CPU). Queued by font and drawn one size at a time,
-	   smallest first (so the biggest, the lens's centre, sit on top), it is
-	   one font change per size in use. NOT a transform per glyph: tried, and
-	   scaled fillText misses the glyph cache, ~1fps. NOT a sprite atlas
-	   either: tried in 0.10.0, no faster than this in Chrome (see the glyph
-	   sheet section), so the queue draws with fillText. */
+	/* MAGNIFIED GLYPHS ARE DRAWN GROUPED BY SIZE. Each magnified glyph has
+	   one of a handful of eighth-step sizes; drawn in grid order, ctx.font
+	   would switch for nearly every one, and every switch makes the browser
+	   parse a font string (~610 changes a frame on a maxed lens, ~10fps at
+	   4x CPU). Queued by font and drawn one size at a time, smallest first
+	   (so the biggest, the lens's centre, sit on top), it is one font change
+	   per size in use. NOT a transform per glyph: scaled fillText misses the
+	   glyph cache, ~1fps. NOT a sprite atlas either: no faster than this in
+	   Chrome (see the glyph sheet section), so the queue draws with fillText. */
 
 	/** paints the lens and the live bursts over the (restored) static layer;
 	    returns the device-px rect it touched, or null when nothing was drawn */
@@ -1451,7 +1511,8 @@ function mount(host, map, options) {
 				// the lens: a smoothstep falloff from the pointer
 				let f = 0, ldx = 0, ldy = 0, ld = 0;
 				if (lensOn) {
-					ldx = cx - pointer.x; ldy = cy - pointer.y;
+					ldx = cx - pointer.x;
+					ldy = cy - pointer.y;
 					const ld2 = ldx * ldx + ldy * ldy;
 					if (ld2 < R2) {
 						ld = Math.sqrt(ld2);
@@ -1471,8 +1532,13 @@ function mount(host, map, options) {
 					if (s > exf) exf = s;
 					const mag = throwMax * s;
 					let ux, uy;
-					if (de > 0.5) { ux = dxe / de; uy = dye / de; }
-					else { ux = hashCos[k]; uy = hashSin[k]; }
+					if (de > 0.5) {
+						ux = dxe / de;
+						uy = dye / de;
+					} else {
+						ux = hashCos[k];
+						uy = hashSin[k];
+					}
 					const j = (a.sinE * hashCos[k] + a.cosE * hashSin[k]) * cfg.swirl;
 					eox += (ux - uy * j) * mag;
 					eoy += (uy + ux * j) * mag;
@@ -1483,8 +1549,10 @@ function mount(host, map, options) {
 				const hx = Math.round(c * g.cwD), hy = Math.round(r * g.chD);
 				const hx1 = Math.round((c + 1) * g.cwD), hy1 = Math.round((r + 1) * g.chD);
 				ctx.fillRect(hx, hy, hx1 - hx, hy1 - hy);
-				if (hx < dx0) dx0 = hx; if (hy < dy0) dy0 = hy;
-				if (hx1 > dx1) dx1 = hx1; if (hy1 > dy1) dy1 = hy1;
+				if (hx < dx0) dx0 = hx;
+				if (hy < dy0) dy0 = hy;
+				if (hx1 > dx1) dx1 = hx1;
+				if (hy1 > dy1) dy1 = hy1;
 				let ch = cells.chars[k];
 				if (f > EPS && cfg.charBoost > 0) {
 					const bi = Math.min(cells.n, cells.idx[k] + Math.round(cfg.charBoost * cells.n * f));
@@ -1492,8 +1560,8 @@ function mount(host, map, options) {
 				}
 				if (ch === ' ') continue;
 				const scale = (1 + (cfg.magnify - 1) * f) * (1 + 0.45 * exf);
-				// the core (f > CORE_AT) takes the core style (2026-10-13: none, bold or
-				// italic; a map with only `weight` means bold or none)
+				// the core (f > CORE_AT) takes the core style (none, bold or italic; a
+				// map with only `weight` means bold or none)
 				const font = fontFor(scale, f > CORE_AT ? coreStyle : 'none');
 				// the colour at rest: the glyph's tone colour, or the ink
 				const base = cells.rest ? [cells.rest[k * 3], cells.rest[k * 3 + 1], cells.rest[k * 3 + 2]]
@@ -1513,12 +1581,19 @@ function mount(host, map, options) {
 					ox += (ldx / ld) * push;
 					oy += (ldy / ld) * push;
 				}
-				ox *= dpr; oy *= dpr;
-				if (ox < dx0) dx0 = ox; if (oy < dy0) dy0 = oy;
-				if (ox > dx1) dx1 = ox; if (oy > dy1) dy1 = oy;
+				ox *= dpr;
+				oy *= dpr;
+				if (ox < dx0) dx0 = ox;
+				if (oy < dy0) dy0 = oy;
+				if (ox > dx1) dx1 = ox;
+				if (oy > dy1) dy1 = oy;
 				if (font.size > spill) spill = font.size;
 				let q = queued.get(font.css);
-				if (!q) { q = []; q.font = font; queued.set(font.css, q); }
+				if (!q) {
+					q = [];
+					q.font = font;
+					queued.set(font.css, q);
+				}
 				q.push(ch, ox, oy, fill);
 			}
 		}
@@ -1547,7 +1622,10 @@ function mount(host, map, options) {
 
 	/** advance the playback clock; true when the frame on screen changed */
 	function advancePlayback(ts) {
-		if (!playing) { lastTs = 0; return false; }
+		if (!playing) {
+			lastTs = 0;
+			return false;
+		}
 		if (lastTs) clock += ts - lastTs;
 		lastTs = ts;
 		const idx = frameIndexAt(clock, rawFrames.length, fps(), cfg.pingpong);
@@ -1573,7 +1651,7 @@ function mount(host, map, options) {
 		return x !== pointer.x || y !== pointer.y || s !== pointer.s;
 	}
 
-	/* A PARKED LENS COSTS NOTHING (0.10.0): a frame where the clip did not
+	/* A PARKED LENS COSTS NOTHING: a frame where the clip did not
 	   advance, the pointer did not move and no burst is in flight would draw
 	   exactly what is on the canvas, so it is skipped and the loop sleeps;
 	   lookAt / burst / setPlaying wake it. The painted rect is kept as dirty
@@ -1587,11 +1665,13 @@ function mount(host, map, options) {
 		if (changed || moved || busy) {
 			// a new clip frame: the whole static layer comes over; otherwise only
 			// the rect the last pass painted is put back before this pass paints
-			if (changed) blitStatic(); else restoreDirty();
+			if (changed) blitStatic();
+			else restoreDirty();
 			if (pointer.s > 0 || busy) dirty = drawDynamic(pointer.s, cellsFor(frameIdx), ts);
 			drawn++;
 		}
-		if (playing || moved || busy) schedule(); else lastTs = 0;
+		if (playing || moved || busy) schedule();
+		else lastTs = 0;
 	}
 
 	function schedule() {
@@ -1599,7 +1679,10 @@ function mount(host, map, options) {
 	}
 
 	function halt() {
-		if (raf) { cancelAnimationFrame(raf); raf = 0; }
+		if (raf) {
+			cancelAnimationFrame(raf);
+			raf = 0;
+		}
 		lastTs = 0;
 	}
 
@@ -1617,7 +1700,10 @@ function mount(host, map, options) {
 	function lookAt(x, y) {
 		pointer.tx = x;
 		pointer.ty = y;
-		if (pointer.s === 0) { pointer.x = x; pointer.y = y; }
+		if (pointer.s === 0) {
+			pointer.x = x;
+			pointer.y = y;
+		}
 		pointer.ts = 1;
 		schedule();
 	}
@@ -1628,25 +1714,31 @@ function mount(host, map, options) {
 	}
 
 	const detachPointer = managed ? attachPointer(canvas, { lookAt, lookAway, burst: explodeAt }) : () => {};
-	const onVis = () => { visible = !document.hidden; if (visible) schedule(); else halt(); };
+	const onVis = () => {
+		visible = !document.hidden;
+		if (visible) schedule();
+		else halt();
+	};
 	document.addEventListener('visibilitychange', onVis);
 	const io = new IntersectionObserver((entries) => {
 		onscreen = entries[0].isIntersecting;
-		if (onscreen) schedule(); else halt();
+		if (onscreen) schedule();
+		else halt();
 	});
 	io.observe(canvas);
-	/* RESIZE (0.10.1, Kesh 2026-10-17: "why is the responsiveness of this page so
-	   bad"): a layout redraws every glyph, and on the gallery four players
-	   resizing at once cost ~150ms a step against the mapper's ~33ms, all of it
-	   fillText. Two fixes. layout() sets the canvas height, which changes the
-	   host's box and fired this observer a second time at the same width: a
-	   height-only change is now ignored. And while the width is still moving
-	   the canvas is only stretched (its height follows the width, so the
-	   picture keeps its shape); the real redraw runs once the width has held
-	   for RESIZE_SETTLE_MS. */
+	/* RESIZE: a layout redraws every glyph, all of it fillText, and four
+	   players resizing at once cost ~150ms a step. Two guards. layout() sets
+	   the canvas height, which changes the host's box and fires this observer
+	   a second time at the same width: a height-only change is ignored. And
+	   while the width is still moving the canvas is only stretched (its
+	   height follows the width, so the picture keeps its shape); the real
+	   redraw runs once the width has held for RESIZE_SETTLE_MS. */
 	function onResize() {
 		const w = host.clientWidth || 600;
-		if (!grid) { layout(); return; }
+		if (!grid) {
+			layout();
+			return;
+		}
 		if (Math.abs(w - grid.wCss) < 0.5) {
 			// back at the drawn width (or only the height moved): no redraw needed
 			clearTimeout(settleTimer);
@@ -1678,10 +1770,15 @@ function mount(host, map, options) {
 			else {
 				rawFrames = framesOf(map);
 				resetPrepped();
-				frameIdx = Math.min(f, rawFrames.length - 1); clock = c; playing = p && animated();
+				frameIdx = Math.min(f, rawFrames.length - 1);
+				clock = c;
+				playing = p && animated();
 				ensureHashes();
 				const sameColour = !!(map.media && prevMedia && map.media.data === prevMedia.data) || (!map.media && !prevMedia);
-				if (!sameColour) { hydCols.length = 0; hydrator.start(map, rawFrames); }
+				if (!sameColour) {
+					hydCols.length = 0;
+					hydrator.start(map, rawFrames);
+				}
 			}
 			layout();
 			schedule();
@@ -1690,7 +1787,10 @@ function mount(host, map, options) {
 		setConfig(patch) {
 			const was = cfg.restColor;
 			cfg = Object.assign({}, cfg, patch);
-			if (cfg.restColor !== was) { resetPrepped(); layout(); }
+			if (cfg.restColor !== was) {
+				resetPrepped();
+				layout();
+			}
 			schedule();
 		},
 		getConfig() { return Object.assign({}, cfg); },
@@ -1710,7 +1810,11 @@ function mount(host, map, options) {
 		getExplosions() { return expls.length; },
 		isAnimated() { return animated(); },
 		isPlaying() { return playing; },
-		setPlaying(b) { playing = !!b && animated(); lastTs = 0; schedule(); },
+		setPlaying(b) {
+			playing = !!b && animated();
+			lastTs = 0;
+			schedule();
+		},
 		getFrame() { return frameIdx; },
 		/** frames drawn so far; still while the player sleeps */
 		getFrameCount() { return drawn; },
@@ -1720,7 +1824,9 @@ function mount(host, map, options) {
 			detachPointer();
 			hydrator.cancel();
 			document.removeEventListener('visibilitychange', onVis);
-			io.disconnect(); ro.disconnect(); clearTimeout(settleTimer);
+			io.disconnect();
+			ro.disconnect();
+			clearTimeout(settleTimer);
 			canvas.remove();
 		}
 	};
